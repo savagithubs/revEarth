@@ -1,0 +1,15 @@
+{
+  "polar": {
+    "future": "polar/future.wav",
+    "ghost-polar-bear": "polar/ghost-polar-bear.wav",
+    "ghost-ringed-seal": "polar/ghost-ringed-seal.wav",
+    "ghost-arctic-fox": "polar/ghost-arctic-fox.wav",
+    "ghost-emperor-penguin": "polar/ghost-emperor-penguin.wav",
+    "ghost-walrus": "polar/ghost-walrus.wav",
+    "go-back": "polar/go-back.wav",
+    "warn": "polar/warn.wav",
+    "wise": "polar/wise.wav",
+    "too-late": "polar/too-late.wav",
+    "ending": "polar/ending.wav"
+  }
+}
