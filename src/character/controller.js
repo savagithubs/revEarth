@@ -17,6 +17,7 @@ import { Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { Scalar } from "@babylonjs/core/Maths/math.scalar";
 import { input } from "../core/input.js";
 import { expDamp } from "../core/camera.js";
+import { G } from "../game/flags.js";
 
 const _wish = new Vector3();
 const _fwd = new Vector3();
@@ -115,7 +116,7 @@ export class CharacterController {
         const h = Math.min(dt, 1 / 30);
 
         this.prevVelocity.copyFrom(this.velocity);
-        this.surfActive = input.surf;
+        this.surfActive = input.surf && G.surfEnabled;
 
         // Ease the surf blend — entering and exiting are transitions, not switches.
         this.surf = expDamp(this.surf, this.surfActive ? 1 : 0, this.surfActive ? 2.6 : 3.4, h);
@@ -156,7 +157,7 @@ export class CharacterController {
     }
 
     _walkStep(h) {
-        const maxSpeed = input.sprint ? RUN_SPEED : WALK_SPEED;
+        const maxSpeed = (input.sprint ? RUN_SPEED : WALK_SPEED) * G.walkScale;
 
         _wish.set(
             _fwd.x * input.moveZ + _right.x * input.moveX,

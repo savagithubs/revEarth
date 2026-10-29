@@ -52,6 +52,17 @@ fn sampleHeightBicubic(tex: texture_2d<f32>, samp: sampler, uv: vec2f, res: f32)
     return mix(mix(t00, t10, s1.x), mix(t01, t11, s1.x), s1.y);
 }
 
+/// revEarth: the share of the landform's relief that survives the melt. Ice
+/// and packed drift are most of what stands up on this field; once they have
+/// run off, the ground under them is a broad, low plain with gentle rises.
+const MELT_RELIEF: f32 = 0.2;
+
+/// Settle a macro height toward the melted plain. `melt` = (amount 0..1, base
+/// height in metres). Must match `Heightfield.heightAt` on the CPU exactly.
+fn meltHeight(h: f32, melt: vec2f) -> f32 {
+    return mix(h, melt.y + (h - melt.y) * MELT_RELIEF, melt.x);
+}
+
 /// World XZ → height-texture UV.
 fn worldToHeightUV(p: vec2f, origin: vec2f, size: f32) -> vec2f {
     return (p - origin) / size;

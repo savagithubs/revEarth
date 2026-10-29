@@ -83,6 +83,8 @@ uniform deformTexel: f32;
 uniform deformDepthScale: f32;
 
 uniform ambientIntensity: f32;
+/// revEarth: 0 = the living present, 1 = the melted future.
+uniform decay: f32;
 uniform debugMode: f32;
 uniform screenSize: vec2f;
 
@@ -203,7 +205,9 @@ fn main(input: FragmentInputs) -> FragmentOutputs {
 
     // ---------------------------------------------------------------- slopes
     let aux = textureSampleLevel(auxTex, auxTexSampler, input.vHeightUV, 0.0);
-    var grad = aux.xy;
+    // revEarth: the baked macro slope flattens with the landform. 0.2 is
+    // MELT_RELIEF in lib/clipmap.wgsl, which this pass does not include.
+    var grad = aux.xy * mix(1.0, 0.2, uniforms.decay);
     let rockMask = aux.z;
     let exposure = aux.w;
 
@@ -375,6 +379,27 @@ fn main(input: FragmentInputs) -> FragmentOutputs {
         // chunky granular read at a trail edge actually comes from.
         let chunk = noise2(world.xz * 34.0) * 0.5 + 0.5;
         albedo *= 1.0 - loose * 0.10 * chunk;
+    }
+
+    // --- revEarth: the melted future ----------------------------------------
+    // The same landform with the snow gone: dark wet tundra and mud, grey
+    // rotten slush clinging to the hollows, and standing meltwater in the
+    // flats. Thickness goes to zero, so the subsurface glow that makes the
+    // field read as snow dies with it.
+    if (uniforms.decay > 0.001) {
+        let d = uniforms.decay;
+        let big = noise2(world.xz * 0.045) * 0.5 + 0.5;
+        let mid = noise2(world.xz * 0.31 + vec2f(17.0, 3.0)) * 0.5 + 0.5;
+        let mud = mix(vec3f(0.045, 0.032, 0.021), vec3f(0.12, 0.085, 0.052), mid);
+        let slush = vec3f(0.26, 0.24, 0.21) * (0.8 + 0.2 * mid);
+        let slushAmt = smoothstep(0.62, 0.8, big) * 0.7;
+        let pool = smoothstep(0.30, 0.18, big) * smoothstep(0.2, 0.02, 1.0 - N.y);
+        var dead = mix(mud, slush, slushAmt);
+        dead = mix(dead, vec3f(0.035, 0.045, 0.05), pool);
+        albedo = mix(albedo, dead, d);
+        roughness = mix(roughness, mix(0.55, 0.05, pool), d);
+        f0 = mix(f0, vec3f(mix(0.03, 0.02, pool)), d);
+        thickness = mix(thickness, 0.0, d);
     }
 
     // Micro-occlusion in the grain crevices, and stronger in carved edges. See

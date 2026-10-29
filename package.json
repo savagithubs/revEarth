@@ -1,12 +1,13 @@
 {
-  "name": "snowflow",
+  "name": "revearth",
   "version": "1.0.0",
-  "description": "Real-time procedural snow rendering tech demo (Babylon.js / WebGPU)",
+  "description": "revEarth: a WebGPU climate game built on the SNOWFLOW snow renderer (Babylon.js / WebGPU)",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "play": "node serve.mjs"
   },
   "keywords": [
     "webgpu",

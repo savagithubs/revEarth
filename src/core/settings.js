@@ -107,6 +107,10 @@ export const S = {
     wireframe: false,
     freezeTime: false,
 
+    // --------------------------------------------------------------- revEarth
+    /** 0 = the living present, 1 = the melted future. Driven by the game. */
+    decay: 0,
+
     // ----------------------------------------------------------------- debug
     debugView: "beauty", // beauty | deform | normals | depth | cascades | footprint | fineNormals
 };

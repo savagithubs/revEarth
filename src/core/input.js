@@ -5,6 +5,8 @@
  * Mouse look uses pointer lock, which frees the right button for snow-surf.
  */
 
+import { G } from "../game/flags.js";
+
 export const input = {
     // Movement axes, camera-relative, already normalised to a unit disc.
     moveX: 0,
@@ -18,7 +20,7 @@ export const input = {
     // Zoom, consumed by the camera rig.
     zoomDelta: 0,
 
-    surf: false, // RMB held
+    surf: false, // RMB or Space held
     sprint: false, // shift
 
     /** @type {number} 0 = none, else 1..5 — set on keydown, cleared each frame */
@@ -30,6 +32,8 @@ export const input = {
 };
 
 const keys = Object.create(null);
+/** Right mouse button held. Combined with Space in `pollInput`. */
+let mouseSurf = false;
 
 const LOOK_SCALE = 0.0022;
 
@@ -52,6 +56,7 @@ export function initInput(canvas, hooks) {
         if (!input.locked) {
             // Drop held state so the character doesn't run off while unfocused.
             for (const k in keys) keys[k] = false;
+            mouseSurf = false;
             input.surf = false;
             input.spellHeld2 = false;
         }
@@ -67,11 +72,11 @@ export function initInput(canvas, hooks) {
 
     document.addEventListener("mousedown", (e) => {
         if (!input.locked) return;
-        if (e.button === 2) input.surf = true;
+        if (e.button === 2) mouseSurf = true;
     });
 
     document.addEventListener("mouseup", (e) => {
-        if (e.button === 2) input.surf = false;
+        if (e.button === 2) mouseSurf = false;
     });
 
     document.addEventListener(
@@ -91,6 +96,8 @@ export function initInput(canvas, hooks) {
             onToggleOverlay?.();
             return;
         }
+        // Space would otherwise scroll the page or re-press a focused button.
+        if (e.code === "Space") e.preventDefault();
         if (e.repeat) return;
         keys[e.code] = true;
 
@@ -108,6 +115,7 @@ export function initInput(canvas, hooks) {
 
     window.addEventListener("blur", () => {
         for (const k in keys) keys[k] = false;
+        mouseSurf = false;
         input.surf = false;
         input.spellHeld2 = false;
     });
@@ -125,7 +133,7 @@ const SPELL_KEYS = {
 export function pollInput() {
     let x = 0;
     let z = 0;
-    if (keys.KeyW || keys.ArrowUp) z += 1;
+    if (keys.KeyW || keys.ArrowUp || G.autoWalk) z += 1;
     if (keys.KeyS || keys.ArrowDown) z -= 1;
     if (keys.KeyD || keys.ArrowRight) x += 1;
     if (keys.KeyA || keys.ArrowLeft) x -= 1;
@@ -140,6 +148,7 @@ export function pollInput() {
     input.moveZ = z;
     input.moving = len > 0.001;
     input.sprint = !!(keys.ShiftLeft || keys.ShiftRight);
+    input.surf = mouseSurf || !!keys.Space;
 }
 
 /** Clear per-frame accumulators. Called at the very end of the frame. */

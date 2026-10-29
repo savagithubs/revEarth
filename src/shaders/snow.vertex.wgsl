@@ -34,6 +34,7 @@ uniform heightRes: f32;
 uniform windAngle: f32;
 uniform macroAmp: f32;
 uniform sastrugiAmp: f32;
+uniform melt: vec2f;
 
 uniform deformCenter: vec2f;
 uniform deformSize: f32;
@@ -69,6 +70,7 @@ fn main(input: VertexInputs) -> FragmentInputs {
 
     // --- macro height ------------------------------------------------------
     var h = sampleHeightBicubic(heightTex, heightTexSampler, hUV, uniforms.heightRes);
+    h = meltHeight(h, uniforms.melt);
 
     // --- fine height -------------------------------------------------------
     // Displaced only where the ring is fine enough to resolve it. Past roughly

@@ -24,6 +24,9 @@ import { Vector2, Vector3 } from "@babylonjs/core/Maths/math.vector";
 import { S } from "../core/settings.js";
 import { bakeOnce } from "../core/gpuUtil.js";
 
+/** revEarth: share of relief left after the melt. Matches lib/clipmap.wgsl. */
+const MELT_RELIEF = 0.2;
+
 export const WORLD_SIZE = 2048; // metres across the whole field
 export const HEIGHT_RES = 4096; // 0.5 m per texel
 export const AUX_RES = 2048;
@@ -44,6 +47,7 @@ export class Heightfield {
         this.cpuRes = 0;
         /** Measured relief, filled in by `_readback`. */
         this.minHeight = 0;
+        this.meltBase = 0;
         this.maxHeight = 0;
 
         this.heightTex = new ProceduralTexture(
@@ -158,6 +162,9 @@ export class Heightfield {
         }
         this.minHeight = lo;
         this.maxHeight = hi;
+        // revEarth: the level the melted plain settles toward — low in the
+        // relief, because the water that stood up as ice has run off.
+        this.meltBase = lo + 0.3 * (hi - lo);
     }
 
     /**
@@ -196,6 +203,10 @@ export class Heightfield {
             }
             sum += rowSum * wz[j];
         }
+        // revEarth: the melted plain. Identical to `meltHeight` in
+        // lib/clipmap.wgsl, or the character would float or sink.
+        const m = S.decay;
+        if (m > 0) sum += (this.meltBase + (sum - this.meltBase) * MELT_RELIEF - sum) * m;
         return sum;
     }
 

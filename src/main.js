@@ -32,6 +32,7 @@ import { ShadowSystem } from "./render/shadows.js";
 import { Terrain } from "./terrain/terrain.js";
 import { DepthPass } from "./render/depthPass.js";
 import { PostChain } from "./post/postChain.js";
+import { Game } from "./game/gameState.js";
 import { whenReady } from "./core/gpuUtil.js";
 import * as loading from "./core/loading.js";
 
@@ -162,6 +163,9 @@ async function boot() {
 
     const post = new PostChain(scene, rig.camera, depthPass, sky);
 
+    // revEarth: the story layer over the whole world.
+    const game = new Game({ scene, terrain, spray, rig, character, spells });
+
     const overlay = new Overlay({ rig, character });
     initInput(canvas, { onToggleOverlay: () => overlay.toggle() });
 
@@ -243,6 +247,9 @@ async function boot() {
         // cascade matrices; before the terrain, so the brushes every spell
         // writes are in the staging array when the simulation pass runs.
         spells.update(dt, rig.camera.position);
+        // After the spells, so a cast this frame has already been reported;
+        // before the terrain, so objective brushes land in this frame's sim.
+        game.update(dtMs / 1000);
         const tSpells = performance.now();
         terrain.update(rig.camera.position, character.position, dt);
         const tTerrain = performance.now();
@@ -287,7 +294,7 @@ async function boot() {
 
     globalThis.SNOWFLOW = {
         engine, scene, rig, character, figure, contact, spray, wake, spells,
-        overlay, terrain, sky, shadows, post, depthPass,
+        overlay, terrain, sky, shadows, post, depthPass, game,
         S, input, perfStats: stats,
     };
 }

@@ -31,6 +31,7 @@ const DETAIL_RES = 1024;
 const _splits = new Vector4(0, 0, 0, 0);
 const _lod = new Vector2();
 const _screen = new Vector2();
+const _melt = new Vector2();
 
 const DEBUG_MODES = {
     beauty: 0, deform: 1, normals: 2, depth: 3, cascades: 4,
@@ -96,7 +97,7 @@ export class Terrain {
                     "viewProjection", "cameraPos", "lodCenter",
                     "baseSpacing", "gridHalfN",
                     "worldOrigin", "worldSize", "heightRes",
-                    "windAngle", "macroAmp", "sastrugiAmp",
+                    "windAngle", "macroAmp", "sastrugiAmp", "melt",
                     "sunDir", "sunRadiance",
                     "shR",
                     "cascadeMatrices", "cascadeSplits", "cascadeParams",
@@ -105,7 +106,7 @@ export class Terrain {
                     "sssStrength", "sssRadius",
                     "fogDensity", "fogHeightFalloff", "fogStart", "aerialStrength",
                     "deformCenter", "deformSize", "deformTexel", "deformDepthScale",
-                    "ambientIntensity", "debugMode", "screenSize",
+                    "ambientIntensity", "decay", "debugMode", "screenSize",
                     ...SPELL_LIGHT_UNIFORMS,
                 ],
                 samplers: [
@@ -147,7 +148,7 @@ export class Terrain {
                     "viewProjection", "cameraPos", "lodCenter",
                     "baseSpacing", "gridHalfN",
                     "worldOrigin", "worldSize", "heightRes",
-                    "windAngle", "sastrugiAmp",
+                    "windAngle", "sastrugiAmp", "melt",
                     "deformCenter", "deformSize", "deformDepthScale",
                 ],
                 samplers: ["heightTex", "auxTex", "deformTex"],
@@ -172,7 +173,7 @@ export class Terrain {
                     "lightViewProjection", "cameraPos", "lodCenter",
                     "baseSpacing", "gridHalfN",
                     "worldOrigin", "worldSize", "heightRes",
-                    "windAngle", "sastrugiAmp",
+                    "windAngle", "sastrugiAmp", "melt",
                     "deformCenter", "deformSize", "deformDepthScale",
                 ],
                 samplers: ["heightTex", "auxTex", "deformTex"],
@@ -287,6 +288,8 @@ export class Terrain {
         m.setFloat("windAngle", windAngle);
         m.setFloat("macroAmp", S.macroHeightScale);
         m.setFloat("sastrugiAmp", S.sastrugiStrength);
+        _melt.set(S.decay, hf.meltBase);
+        m.setVector2("melt", _melt);
 
         m.setVector3("sunDir", this.sky.sunDir);
         m.setColor3("sunRadiance", this.sky.sunRadiance);
@@ -316,6 +319,7 @@ export class Terrain {
         m.setFloat("fogStart", S.fogStart);
         m.setFloat("aerialStrength", S.aerialStrength);
         m.setFloat("ambientIntensity", S.ambientIntensity);
+        m.setFloat("decay", S.decay);
 
         m.setVector2("deformCenter", deformCenter);
         m.setFloat("deformSize", deformSize);
@@ -343,6 +347,7 @@ export class Terrain {
             pm.setFloat("heightRes", 4096);
             pm.setFloat("windAngle", windAngle);
             pm.setFloat("sastrugiAmp", S.sastrugiStrength);
+            pm.setVector2("melt", _melt);
             pm.setVector2("deformCenter", deformCenter);
             pm.setFloat("deformSize", deformSize);
             pm.setFloat("deformDepthScale", S.deformDepth);
@@ -364,6 +369,7 @@ export class Terrain {
                 d.setFloat("heightRes", 4096);
                 d.setFloat("windAngle", windAngle);
                 d.setFloat("sastrugiAmp", S.sastrugiStrength);
+                d.setVector2("melt", _melt);
                 d.setVector2("deformCenter", deformCenter);
                 d.setFloat("deformSize", deformSize);
                 d.setFloat("deformDepthScale", S.deformDepth);

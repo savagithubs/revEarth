@@ -28,6 +28,7 @@ uniform heightRes: f32;
 
 uniform windAngle: f32;
 uniform sastrugiAmp: f32;
+uniform melt: vec2f;
 
 uniform deformCenter: vec2f;
 uniform deformSize: f32;
@@ -57,6 +58,7 @@ fn main(input: VertexInputs) -> FragmentInputs {
     let hUV = worldToHeightUV(worldXZ, uniforms.worldOrigin, uniforms.worldSize);
 
     var h = sampleHeightBicubic(heightTex, heightTexSampler, hUV, uniforms.heightRes);
+    h = meltHeight(h, uniforms.melt);
 
     let exposure = textureSampleLevel(auxTex, auxTexSampler, hUV, 0.0).a;
     if (cv.spacing < 0.42) {

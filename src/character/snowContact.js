@@ -20,6 +20,8 @@
  * Zero allocation: brushes are pushed straight into the field's staging array.
  */
 
+import { S } from "../core/settings.js";
+
 /**
  * Boot geometry, metres. `WIDTH` is the short-axis radius, so the print is
  * 20 cm across and 34 cm long — a boot plus the collapse of the snow around it,
@@ -73,6 +75,9 @@ export class SnowContact {
         const moved = Math.hypot(dx, dz);
         this._prevX = ch.position.x;
         this._prevZ = ch.position.z;
+
+        // revEarth: the melted future has no snow to print or kick.
+        if (S.decay > 0.5) return;
 
         if (ch.surf > 0.02) this._surf(dt, moved);
         if (ch.surf < 0.98) this._walk(dt, moved);

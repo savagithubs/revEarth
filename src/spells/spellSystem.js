@@ -33,6 +33,7 @@ import { Bloom } from "./bloom.js";
 import { Crystallize } from "./crystallize.js";
 import { Vortex } from "./vortex.js";
 import { aimPoint, clamp01 } from "./bending.js";
+import { G } from "../game/flags.js";
 
 /**
  * @typedef {{
@@ -170,6 +171,8 @@ export class SpellSystem {
         else this._cancelAll();
 
         for (let i = 0; i < this.spells.length; i++) this.spells[i].update(dt);
+        // revEarth objectives and ghosts take whatever slots the spells left.
+        G.addLights?.(this.lights);
 
         // The casting stance eases in while anything is up and out again after.
         // Nothing about it is a switch.
@@ -196,9 +199,26 @@ export class SpellSystem {
         // Ribbon is a hold, so it is polled rather than edge-triggered.
         // `debugRibbon` lets the console hold it without synthesising a key
         // event — the poll would otherwise release it on the very next frame.
-        this.holdRibbon(input.spellHeld2 || this.debugRibbon);
         const key = input.spellPressed;
-        if (key && key !== 2) this.cast(key);
+        // revEarth: in the collapsed future the powers are gone. Say so, once
+        // per press, and let nothing through — including a held Ribbon.
+        if (!G.powersEnabled) {
+            this.holdRibbon(false);
+            if (key) G.onBlocked?.(key);
+            return;
+        }
+        // While the timeline is being repaired, a power only answers beside
+        // a site that needs it. Ribbon is checked when the hold starts.
+        let hold2 = input.spellHeld2 || this.debugRibbon;
+        if (hold2 && !this.ribbon.held && G.canCast && !G.canCast(2)) {
+            hold2 = false;
+            if (key === 2) G.onBlocked?.(2);
+        }
+        this.holdRibbon(hold2);
+        if (key && key !== 2) {
+            if (G.canCast && !G.canCast(key)) G.onBlocked?.(key);
+            else this.cast(key);
+        }
     }
 
     /**
@@ -219,6 +239,7 @@ export class SpellSystem {
         }
 
         this._lastCast = this._time;
+        G.onSpell?.(key);
 
         if (key === 1) {
             // Flat aim: the crescent runs along the ground, so a camera pointed
@@ -226,6 +247,9 @@ export class SpellSystem {
             const fl = Math.hypot(this.aim.x, this.aim.z) || 1;
             this.sweep.trigger(this.aim.x / fl, this.aim.z / fl);
             rig.addTrauma(0.12);
+            // The crescent runs ~10 m along the ground ahead of the player.
+            const p = ctx.controller.position;
+            G.onCast?.(1, p.x + (this.aim.x / fl) * 7, p.y, p.z + (this.aim.z / fl) * 7);
             return;
         }
 
@@ -250,12 +274,15 @@ export class SpellSystem {
             );
             if (key === 3) this.bloom.trigger(_aim[0], _aim[1], _aim[2]);
             else this.crystallize.trigger(_aim[0], _aim[1], _aim[2]);
+            G.onCast?.(key, _aim[0], _aim[1], _aim[2]);
             return;
         }
 
         if (key === 5) {
             this.vortex.trigger();
             rig.addTrauma(0.10);
+            const p = ctx.controller.position;
+            G.onCast?.(5, p.x, p.y, p.z);
         }
     }
 
@@ -265,6 +292,7 @@ export class SpellSystem {
             if (!this.ribbon.held) {
                 this.ribbon.trigger();
                 this._lastCast = this._time;
+                G.onSpell?.(2);
             }
         } else if (this.ribbon.held) {
             this.ribbon.release();
